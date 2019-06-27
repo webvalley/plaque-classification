@@ -10,9 +10,9 @@ import imageio
 '''
 Random Rotation
 '''
-def rand_rot(img):
-   angle = random.randrange(0, 180)
-   return(rotate(img, angle, resize=True))
+def rot(img, ang):
+   #angle = random.randrange(0, 180)
+   return(rotate(img, ang))
 '''
 Flip Horizontal
 '''
@@ -28,9 +28,7 @@ def vflip(img):
 Flip Diagonal
 '''
 def dflip(img):
-    img = hflip(img)
-    return vflip(img)
-
+    return vflip(hflip(img))
 '''
 Gaussian Blur
 '''
@@ -38,14 +36,17 @@ def gauss(img, sig):
     return filters.gaussian(img, sigma = sig)
 
 raw_images = "./Data/Raw/"
+patch_images = "./Data/Patches/"
 aug_images = "./Data/Aug/"
-png_files = [os.path.join(raw_images, file_path) for file_path in os.listdir(raw_images)]
+png_files = [os.path.join(patch_images, file_path) for file_path in os.listdir(patch_images)]
 for counter, file_path in enumerate(png_files):
-    print(file_path) 
+    # print(file_path) 
     img = np.array(imageio.imread(file_path))   
     np.save(aug_images + file_path.split("/")[-1][:-4]+".npy", img)
-    img_rot = rand_rot(img)
-    np.save(aug_images + file_path.split("/")[-1][:-4]+"_rot.npy", img_rot)
+    img_rot90 = rot(img, 90)
+    np.save(aug_images + file_path.split("/")[-1][:-4]+"_rot90.npy", img_rot90)
+    img_rot270 = rot(img, 270)
+    np.save(aug_images + file_path.split("/")[-1][:-4]+"_rot270.npy", img_rot270)
     img_hflip = hflip(img)
     np.save(aug_images + file_path.split("/")[-1][:-4]+"_hflip.npy", img_hflip)
     img_vflip = vflip(img)
