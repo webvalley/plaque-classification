@@ -24,6 +24,12 @@ Flip Vertical
 '''
 def vflip(img):
     return np.flipud(img)
+'''
+Flip Diagonal
+'''
+def dflip(img):
+    img = hflip(img)
+    return vflip(img)
 
 '''
 Gaussian Blur
@@ -35,16 +41,18 @@ raw_images = "./Data/Raw/"
 aug_images = "./Data/Aug/"
 png_files = [os.path.join(raw_images, file_path) for file_path in os.listdir(raw_images)]
 for counter, file_path in enumerate(png_files):
-    print(file_path)
+    print(file_path) 
     img = np.array(imageio.imread(file_path))   
-    np.save(aug_images + file_path.split("/")[-1][:4]+".npy", img)
+    np.save(aug_images + file_path.split("/")[-1][:-4]+".npy", img)
     img_rot = rand_rot(img)
-    np.save(aug_images + file_path.split("/")[-1][:4]+"_rot.npy",img_rot)
-    img_hflip = hflip(img_rot)
-    np.save(aug_images + file_path.split("/")[-1][:-4]+"_hflip.npy",img_hflip)
-    img_vlip = vflip(img_hflip)
-    np.save(aug_images + file_path.split("/")[-1][:-4]+"_vlip.npy",img_vlip)
-    img_gauss = gauss(img_vlip, 10)
-    np.save(aug_images + file_path.split("/")[-1][:-4]+"_gauss.npy",img_gauss)
-
-
+    np.save(aug_images + file_path.split("/")[-1][:-4]+"_rot.npy", img_rot)
+    img_hflip = hflip(img)
+    np.save(aug_images + file_path.split("/")[-1][:-4]+"_hflip.npy", img_hflip)
+    img_vflip = vflip(img)
+    np.save(aug_images + file_path.split("/")[-1][:-4]+"_vflip.npy", img_vflip)
+    img_dflip = dflip(img)
+    np.save(aug_images + file_path.split("/")[-1][:-4]+"_dflip.npy", img_dflip)
+    img_gauss = gauss(img, 10)
+    np.save(aug_images + file_path.split("/")[-1][:-4]+"_gauss10.npy", img_gauss)
+    #img_gauss = gauss(img_, 20)
+    #np.save(aug_images + file_path.split("/")[-1][:-4]+"_gauss20.npy", img_gauss)
