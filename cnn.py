@@ -1,4 +1,5 @@
 import os
+import imageio
 import numpy as np
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
@@ -31,14 +32,17 @@ y = []
 dir = "./Data/Patches/NoPlaque"
 for filename in os.listdir(dir):
 	print(os.path.join(dir, filename))
-	img = np.load(os.path.join(dir, filename))[:,:,0]
-	X.append(im_rez)
+	img = np.array(imageio.imread(os.path.join(dir, filename)))[:,:,0]
+	#img = np.load(os.path.join(dir, filename))[:,:,0]
+	X.append(img)
 	y.append(0)
 
-dir = "./Data/Aug1"
+dir = "./Data/Patches/Plaque/Aug"
 for filename in os.listdir(dir):
+	print(os.path.join(dir, filename))
 	img = np.load(os.path.join(dir, filename))[:,:,0]
-	X.append(im_rez)
+	#img = np.load(os.path.join(dir, filename))[:,:,0]
+	X.append(img)
 	y.append(1)
 
 X = np.array(X)
