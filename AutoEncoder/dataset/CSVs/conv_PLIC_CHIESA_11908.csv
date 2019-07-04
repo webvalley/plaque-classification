@@ -1,0 +1,5 @@
+image_names,name,xmin,xmax,ymin,ymax
+conv_PLIC_CHIESA_11908,Total carotid,132,509,62,153
+conv_PLIC_CHIESA_11908,Fibrous plaque,229,355,116,146
+conv_PLIC_CHIESA_11908,Lipid plaque,243,298,128,143
+conv_PLIC_CHIESA_11908,Calcific plaque,228,272,69,88

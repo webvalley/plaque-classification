@@ -1,0 +1,5 @@
+image_names,name,xmin,xmax,ymin,ymax
+conv_PLIC_CHIESA_13956,Total carotid transversal,271,419,74,212
+conv_PLIC_CHIESA_13956,Calcific plaque,360,387,154,196
+conv_PLIC_CHIESA_13956,Fibrous plaque,322,360,173,195
+conv_PLIC_CHIESA_13956,Calcific plaque,376,416,100,143
