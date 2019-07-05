@@ -21,9 +21,8 @@ from sklearn.preprocessing import LabelEncoder
 import pydicom
 import random
 
-output_txt = open("output5_3Class.txt","w")
+output_txt = open("output5tissue.txt","w")
 output_txt.write('\nLR: 1e-5\n')
-output_txt.write('Classification Type: Plaque and Tissue Classification\n')
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 
@@ -101,7 +100,7 @@ def get_model(ytr, Xtr):
     classifier.add(Dense(units = 128, activation = 'relu'))
     classifier.add(Dropout(0.3))
     classifier.add(Dense(units = 32, activation = 'relu'))
-    classifier.add(Dense(units = 3, activation = 'softmax'))
+    classifier.add(Dense(units = 2, activation = 'softmax'))
     adam = keras.optimizers.Adam(lr = 1e-5)
     classifier.compile(optimizer = adam, loss = 'categorical_crossentropy', metrics = ['accuracy', f1_m, precision_m, recall_m])
     return classifier
@@ -186,13 +185,13 @@ ytemp = []
 X = []
 y = []
 index = []
-
+'''
 count0 = 0
 dir = "./Data/Patches/NoPlaque"
 for filename in os.listdir(dir):
     img = np.array(cv2.imread(os.path.join(dir, filename)))[:,:,0:1]
     Xtemp.append(img)
-    ytemp.append([0,0,1])
+    ytemp.append([1 , 0])
     
 while(len(index) != 2510):
     r = random.randint(1,2510)
@@ -203,40 +202,40 @@ for i in index:
     X.append(Xtemp[i])
     y.append(ytemp[i])
 count0 = len(X)
+'''
 
-count1 = 0
+count0 = 0
 dir = "./Data/Patches/Plaque/Aug/cal"
 for filename in os.listdir(dir):
     img = np.array(cv2.imread(os.path.join(dir, filename)))[:,:,0:1]
     X.append(img)
-    y.append([0, 1, 0])
-    count1 += 1
+    y.append([0, 1])
+    count0 += 1
 
 
-count2 = 0
+count1 = 0
 dir = "./Data/Patches/Plaque/Aug/fibrous"
 for filename in os.listdir(dir):
     img = np.array(cv2.imread(os.path.join(dir, filename)))[:,:,0:1]
     X.append(img)
-    y.append([1,0,0])  
-    count2 += 1
-
+    y.append([1, 0])  
+    count1 += 1
 
 X = np.array(X)
 y = np.array(y)
 
 weight_for_0 = 1. / count0
 weight_for_1 = 1. / count1
-weight_for_2 = 1. / count2
+#weight_for_2 = 1. / count2
 
-print("count #0: ", count0, " | count #1: ", count1)
+print("count #0: ", count0, " | count #1: ", count1, "\n")
 print("weight for 0: ", weight_for_0, " | weight for 1: ", weight_for_1)
 output_txt.write(("count #0: "+ str(count0) + " | count #1: "+ str(count1)+ "\n"))
 output_txt.write(("weight for 0: "+ str(weight_for_0)+ " | weight for 1: "+ str(weight_for_1)+ "\n"))
-
+                 
 Xtr, Xts, ytr, yts = train_test_split(np.copy(X), np.copy(y), test_size=0.25, stratify=y, random_state=42)
 
-ytr_categorical = keras.utils.to_categorical(ytr, num_classes = 3)
+#ytr_categorical = keras.utils.to_categorical(ytr, num_classes = 3)
 
 ytr_onedim = np.argmax(ytr, axis=1)
 rskf = RepeatedStratifiedKFold(n_splits=3, n_repeats=1, random_state=42)
@@ -251,7 +250,7 @@ for train_index, val_index in rskf.split(Xtr, ytr_onedim):
     
     mean_k = np.mean(Xtrk)
     std_k = np.std(Xtrk)
-    print(("mean:" + str(mean_k) + "std:" + str(std_k)))
+    print(("mean: " + str(mean_k) + " | std: " + str(std_k)))
     output_txt.write(("mean:" + str(mean_k) + "\nstd:" + str(std_k) + "\n"))
     
     Xtrk = (Xtrk - mean_k) / std_k
@@ -263,19 +262,12 @@ for train_index, val_index in rskf.split(Xtr, ytr_onedim):
     print("#ytrk:", ytrk.sum(axis=0), "#yval:", yval.sum(axis=0))
     print("#ytrk:", ytrk.sum(axis=0)/len(ytrk), "#yval:", yval.sum(axis=0) / len(yval))
 
-#     mean = np.mean(Xtrk, axis=0)
-#     Xtrk = np.subtract(Xtrk,mean)
-#     ytrk = np.subtract(Xval,mean)
-#     std = np.std(Xtrk, axis=0)
-#     Xtrk = np.divide(Xtrk,std)
-#     ytrk = np.divide(Xval,std)
-    
     classifier = get_model(ytrk, Xtrk)
     classifier.summary()
 
     print("Run: ", n)
     #es = EarlyStopping(patience=5, restore_best_weights = True)
-    class_weights = {0: weight_for_0, 1: weight_for_1, 2: weight_for_2}
+    class_weights = {0: weight_for_0, 1: weight_for_1} #2: weight_for_2}
     history = classifier.fit(Xtrk, ytrk,
                     #callbacks = [es],
                     epochs = 40,
@@ -286,10 +278,10 @@ for train_index, val_index in rskf.split(Xtr, ytr_onedim):
     yval_rk = classifier.predict(Xval)
     mcc_tr.append(calc_mcc(yval, yval_rk))
     print('MCC ', str(n), ': ', str(calc_mcc(yval, yval_rk)))
-    output_txt.write(('MCC ' + str(n) + ': ' + str(calc_mcc(yval, yval_rk)) + '\n'))
+    output_txt.write(('\nMCC for fold ' + str(n) + ': ' + str(calc_mcc(yval, yval_rk)) + '\n'))
     classifier.evaluate(Xval, yval)
-    classifier.save("./Models/model/tests/KFold3Class_lr-5_" + str(n) + ".h5")
-    json.dump(history.history, open("./Models/JSON/tests/KFold3Class_lr-5_" + str(n) + ".json", "w"))
+    classifier.save("./Models/model/tests/KFoldTissue_lr-5_" + str(n) + ".h5")
+    json.dump(history.history, open("./Models/JSON/tests/KFoldTissue_lr-5_" + str(n) + ".json", "w"))
     n += 1
     
     #print("DOING ONLY ONE SEED")
@@ -308,29 +300,29 @@ Xtr = (Xtr - mean) / std
 Xts = (Xts - mean) / std
 print("mean:", str(mean), "std:", str(std))
 output_txt.write(("mean:" + str(mean) + '\n' + "std:" + str(std) + '\n'))
-# mean: 43.35145848896082 std: 34.45658024674099
+#plaque vs noplaque mean: 43.35145848896082 std: 34.45658024674099
 
-class_weights = {0: weight_for_0, 1: weight_for_1, 2: weight_for_2}
+class_weights = {0: weight_for_0, 1: weight_for_1} #, 2: weight_for_2}
 classifier = get_model(ytr, Xtr)
 classifier.summary()
 history = classifier.fit(Xtr, ytr,
                 #callbacks = [es],
-                epochs = 20,
+                epochs = 40,
                 batch_size = 32,
                 validation_data = (Xts, yts),
                 class_weight = class_weights)
 yts_r = classifier.predict(Xts)
 mcc_all.append(calc_mcc(yts, yts_r))
-print('MCC Final: ', str(calc_mcc(yts, yts_r)))
-output_txt.write(('MCC Final: ' + str(calc_mcc(yts, yts_r)) + '\n'))
+print('MCC: ', str(calc_mcc(yts, yts_r)))
+output_txt.write(('\nMCC Final: ' + str(calc_mcc(yts, yts_r)) + '\n'))
 classifier.evaluate(Xts, yts)
-classifier.save("./Models/model/tests/noKFold3Class_lr-5.h5")
-json.dump(history.history, open("./Models/JSON/tests/noKFold3Class_lr-5.json", "w"))
+classifier.save("./Models/model/tests/noKFoldTissue_lr-5.h5")
+json.dump(history.history, open("./Models/JSON/tests/noKFoldTissue_lr-5.json", "w"))
 
 # In[ ]:
 
 avg, minimum, maximum, conf_int, inrange, outofrange = stats(mcc_tr, mcc_all)
-output_txt.write(('Avg MCC: ' + str(avg) + '\n'))
+output_txt.write(('\nAvg MCC: ' + str(avg) + '\n'))
 print(('Avg MCC: ' + str(avg)))
 output_txt.write(('Min MCC: ' + str(minimum) + '\n'))
 print(('Min MCC: ' + str(minimum)))
